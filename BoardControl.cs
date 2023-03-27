@@ -51,6 +51,23 @@ public class BoardControl : UserControl
 
     private void UpdateBoard()
     {
+        bool gameOver = gameController.CheckForGameOver();
+        if (gameOver)
+        {
+            string message;
+            if (gameController.GameWon)
+            {
+                message = "Congratulations, you won!";
+            }
+            else
+            {
+                message = "Sorry, you lost. Better luck next time!";
+            }
+            MessageBox.Show(message);
+            DisableAllCellControls();
+            return;
+        }
+
         for (int row = 0; row < gameController.Rows; row++)
         {
             for (int col = 0; col < gameController.Columns; col++)
@@ -60,6 +77,14 @@ public class BoardControl : UserControl
         }
 
         // Update timer, mine counter, etc.
+    }
+
+    private void DisableAllCellControls()
+    {
+        foreach (CellControl cellControl in cellControls)
+        {
+            cellControl.Enabled = false;
+        }
     }
 
     private void UpdateCellState(int row, int col, CellState cellState)
@@ -128,4 +153,60 @@ public class BoardControl : UserControl
                 throw new InvalidOperationException("Invalid cell state.");
         }
     }
+
+    public void NewGame(int rows, int cols, int numMines)
+    {
+        CreateGameBoard(rows, cols, numMines);
+        CreateCellControls(rows, cols);
+        ResetBoard();
+    }
+
+    public void ResetBoard()
+    {
+        gameController.Reset();
+        ResetCellControls();
+    }
+
+    private void ResetCellControls()
+    {
+        foreach (CellControl cellControl in cellControls)
+        {
+            cellControl.Reset();
+        }
+    }
+
+    public void ToggleSound()
+    {
+        // Toggle the sound option
+        SoundManager.SoundEnabled = !SoundManager.SoundEnabled;
+
+        // Update the sound icon in each cell control
+        foreach (CellControl cellControl in cellControls)
+        {
+            cellControl.UpdateSoundIcon();
+        }
+    }
+
+    public void ToggleMusic()
+    {
+        // Toggle the music option
+        SoundManager.MusicEnabled = !SoundManager.MusicEnabled;
+
+        // If music is now enabled, start playing it
+        if (SoundManager.MusicEnabled)
+        {
+            SoundManager.PlayMusic();
+        }
+        else // Otherwise, stop playing it
+        {
+            SoundManager.StopMusic();
+        }
+
+        // Update the music icon in each cell control
+        foreach (CellControl cellControl in cellControls)
+        {
+            cellControl.UpdateMusicIcon();
+        }
+    }
+
 }
