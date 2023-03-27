@@ -38,7 +38,7 @@
   <ItemGroup>
     <Compile Include="Board.cs" />
     <Compile Include="BoardControl.cs">
-      <SubType>Component</SubType>
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="CellControl.cs">
       <SubType>UserControl</SubType>
