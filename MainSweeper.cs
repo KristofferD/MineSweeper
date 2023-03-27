@@ -7,7 +7,7 @@ class MainSweeperForm : Form
 
     public MainSweeperForm()
     {
-        this.game = new Game();
+        this.game = new Game(10, 10, 10);
         this.InitializeComponent();
     }
 

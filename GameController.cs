@@ -1,7 +1,26 @@
-﻿using System;
+﻿using Minesweeper;
+using System;
 
-namespace Minesweeper
+namespace MineSweeper
 {
+    public static class CellStateExtensions
+    {
+        public static bool IsRevealed(this CellState state)
+        {
+            return state >= CellState.Revealed;
+        }
+
+        public static bool IsMine(this CellState state)
+        {
+            return state == CellState.Mine;
+        }
+
+        public static bool IsFlagged(this CellState state)
+        {
+            return state == CellState.Flagged;
+        }
+    }
+
     public class GameController
     {
         private readonly int _boardWidth;
@@ -11,6 +30,8 @@ namespace Minesweeper
         private bool _gameOver;
 
         public event EventHandler<EventArgs> GameOver;
+
+
 
         public int FlagsRemaining => _numMines - CountFlags();
 
@@ -37,9 +58,9 @@ namespace Minesweeper
             {
                 int x = random.Next(boardWidth);
                 int y = random.Next(boardHeight);
-                if (!_board[x, y].IsMine)
+                if (!_board[x, y].IsMine())
                 {
-                    _board[x, y].IsMine = true;
+                    _board[x, y] = CellState.Mine;
                     numPlacedMines++;
                 }
             }
@@ -54,15 +75,15 @@ namespace Minesweeper
         {
             var cell = _board[x, y];
 
-            if (cell.IsFlagged || cell.IsRevealed)
+            if (cell.IsFlagged() || cell.IsRevealed())
             {
                 // Cell is already flagged or revealed, do nothing
                 return;
             }
 
-            cell.IsRevealed = true;
+            _board[x, y] = CellState.Revealed;
 
-            if (cell.IsMine)
+            if (_board[x, y].IsMine())
             {
                 // Game over, the player has clicked on a mine
                 _gameOver = true;
@@ -70,7 +91,7 @@ namespace Minesweeper
                 return;
             }
 
-            if (cell.AdjacentMines == 0)
+            if (_board[x, y].AdjacentMines == 0)
             {
                 // Recursively reveal all adjacent cells with no adjacent mines
                 for (int dx = -1; dx <= 1; dx++)
@@ -88,18 +109,21 @@ namespace Minesweeper
             }
         }
 
+
         public void FlagCell(int x, int y)
         {
             var cell = _board[x, y];
 
-            if (cell.IsRevealed)
+            if (cell.IsFlagged || cell.IsRevealed)
             {
-                // Cell is already revealed, do nothing
+                // Cell is already revealed or flagged, do nothing
                 return;
             }
 
-            cell.IsFlagged = !cell.IsFlagged;
+            // Use the IsFlagged property or field directly
+            cell.IsFlagged = true;
         }
+    }
 
         public bool IsGameOver()
         {
@@ -108,24 +132,25 @@ namespace Minesweeper
                 return true;
             }
 
-            // Check if all non-mine cells have been revealed
+            // Check if all non-mine cells have been revealed or flagged
             for (int x = 0; x < _boardWidth; x++)
             {
                 for (int y = 0; y < _boardHeight; y++)
                 {
                     var cell = _board[x, y];
-                    if (!cell.IsMine && !cell.IsRevealed)
+                    if (!cell.IsMine && !cell.IsRevealed && !cell.IsFlagged)
                     {
                         return false;
                     }
                 }
-                // If we get here, all non-mine cells have been revealed and the game is over
-                _gameOver = true;
-                OnGameOver();
-                return true;
             }
 
+            // If we get here, all non-mine cells have been revealed or flagged and the game is over
+            _gameOver = true;
+            OnGameOver();
+            return true;
         }
+
 
         private int CountFlags()
         {
@@ -147,5 +172,8 @@ namespace Minesweeper
         {
             GameOver?.Invoke(this, EventArgs.Empty);
         }
+
+ 
+
     }
 }

@@ -2,106 +2,168 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace Minesweeper
+namespace MineSweeper
 {
-    public class CellControl : UserControl
+    public enum CellState
     {
-        private const int ImageSize = 25;
+        Covered,
+        Flagged,
+        Revealed,
+        QuestionMark,
+        Mine
+    }
+    public class Cell
+    {
+        public bool IsRevealed { get; set; }
+        public bool IsFlagged { get; set; }
+        public bool HasMine { get; set; }
+        public int NumberOfSurroundingMines { get; set; }
 
-        private readonly Image _cellCovered = Properties.Resources.CellCovered;
-        private readonly Image _cellFlag = Properties.Resources.CellFlag;
-        private readonly Image _mineExploded = Properties.Resources.MineExploded;
+        public int AdjacentMines(Cell[,] grid, int rows, int cols)
+        {
+            int adjacentMines = 0;
+
+            for (int i = Math.Max(0, rows - 1); i <= Math.Min(rows + 1, grid.GetLength(0) - 1); i++)
+            {
+                for (int j = Math.Max(0, cols - 1); j <= Math.Min(cols + 1, grid.GetLength(1) - 1); j++)
+                {
+                    if (grid[i, j].HasMine)
+                    {
+                        adjacentMines++;
+                    }
+                }
+            }
+
+            return adjacentMines;
+        }
+    }
+
+
+    public partial class CellControl : UserControl
+    {
+        private readonly Image _cellCovered = Image.FromFile("CellCovered.png");
+        private readonly Image _cellFlag = Image.FromFile("CellFlag.png");
+        private readonly Image _mineExploded = Image.FromFile("MineExploded.png");
         private readonly Image[] _cellNumbers = {
-            Properties.Resources.Cell0,
-            Properties.Resources.Cell1,
-            Properties.Resources.Cell2,
-            Properties.Resources.Cell3,
-            Properties.Resources.Cell4,
-            Properties.Resources.Cell5,
-            Properties.Resources.Cell6,
-            Properties.Resources.Cell7,
-            Properties.Resources.Cell8,
+            Image.FromFile("Cell0.png"),
+            Image.FromFile("Cell1.png"),
+            Image.FromFile("Cell2.png"),
+            Image.FromFile("Cell3.png"),
+            Image.FromFile("Cell4.png"),
+            Image.FromFile("Cell5.png"),
+            Image.FromFile("Cell6.png"),
+            Image.FromFile("Cell7.png"),
+            Image.FromFile("Cell8.png"),
         };
 
-        public bool IsMine { get; set; }
-        public bool IsFlagged { get; set; }
-        public bool IsRevealed { get; set; }
-        public int AdjacentMines { get; set; }
+        private Cell _cell;
+        private bool _isLeftMouseDown;
+        private bool _isRightMouseDown;
 
-        public event EventHandler LeftClicked;
-        public event EventHandler RightClicked;
+        public Cell Cell
+        {
+            get { return _cell; }
+            set
+            {
+                _cell = value;
+                Invalidate();
+            }
+        }
 
         public CellControl()
         {
-            // Set some default properties for the control
-            Size = new Size(ImageSize, ImageSize);
-            Margin = new Padding(0);
-            Padding = new Padding(0);
-            MouseClick += CellControl_MouseClick;
-
-            // Create a new PictureBox to represent the cell's cover image
-            var coverImage = new PictureBox
-            {
-                Dock = DockStyle.Fill,
-                Image = _cellCovered
-            };
-            Controls.Add(coverImage);
+            InitializeComponent();
+        }
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            this.BackColor = System.Drawing.Color.DarkGray;
+            this.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.Margin = new System.Windows.Forms.Padding(0);
+            this.Name = "CellControl";
+            this.Size = new System.Drawing.Size(32, 32);
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.CellControl_MouseDown);
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.CellControl_MouseUp);
+            this.ResumeLayout(false);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
-            var graphics = e.Graphics;
-
-            // Draw a border around the cell
-            var borderPen = new Pen(Color.DarkGray);
-            graphics.DrawRectangle(borderPen, 0, 0, ImageSize - 1, ImageSize - 1);
-
-            if (IsRevealed)
+            if (_cell.IsFlagged && !_cell.IsRevealed)
             {
-                // If the cell is a mine, show the exploded mine image
-                if (IsMine)
+                e.Graphics.DrawImage(_cellFlag, 0, 0, Width, Height);
+                return;
+            }
+
+            if (_cell.IsRevealed)
+            {
+                if (_cell.HasMine)
                 {
-                    graphics.DrawImage(_mineExploded, new Point(0, 0));
+                    e.Graphics.DrawImage(_mineExploded, 0, 0, Width, Height);
+                    return;
                 }
-                // Otherwise, show the number of adjacent mines or an empty cell
-                else if (AdjacentMines > 0 && AdjacentMines < 9)
+
+                int number = _cell.NumberOfSurroundingMines;
+                if (number >= 0 && number < _cellNumbers.Length)
                 {
-                    graphics.DrawImage(_cellNumbers[AdjacentMines], new Point(0, 0));
-                }
-                else
-                {
-                    graphics.FillRectangle(Brushes.LightGray, new Rectangle(0, 0, ImageSize, ImageSize));
+                    e.Graphics.DrawImage(_cellNumbers[number], 0, 0, Width, Height);
+                    return;
                 }
             }
-            else if (IsFlagged)
-            {
-                // If the cell is flagged, draw a flag image over the cover image
-                graphics.DrawImage(_cellFlag, new Point(0, 0));
-            }
+
+            e.Graphics.DrawImage(_cellCovered, 0, 0, Width, Height);
         }
 
-        private void CellControl_MouseClick(object sender, MouseEventArgs e)
+        private void CellControl_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
-                OnLeftClicked();
+                _isLeftMouseDown = true;
             }
             else if (e.Button == MouseButtons.Right)
             {
-                OnRightClicked();
+                _isRightMouseDown = true;
             }
         }
 
-        protected virtual void OnLeftClicked()
+        private void CellControl_MouseUp(object sender, MouseEventArgs e)
         {
-            LeftClicked?.Invoke(this, EventArgs.Empty);
+            if (e.Button == MouseButtons.Left)
+            {
+                _isLeftMouseDown = false;
+
+                if (ClientRectangle.Contains(e.Location))
+                {
+                    OnLeftMouseClick();
+                }
+            }
+            else if (e.Button == MouseButtons.Right)
+            {
+                _isRightMouseDown = false;
+
+                if (ClientRectangle.Contains(e.Location))
+                {
+                    OnRightMouseClick();
+                }
+            }
         }
 
-        protected virtual void OnRightClicked()
+        private void OnLeftMouseClick()
         {
-            RightClicked?.Invoke(this, EventArgs.Empty);
+            if (!_cell.IsFlagged)
+            {
+                CellRevealed?.Invoke(this, EventArgs.Empty);
+            }
         }
+
+        private void OnRightMouseClick()
+        {
+            CellFlagged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public event EventHandler CellRevealed;
+        public event EventHandler CellFlagged;
     }
 }
