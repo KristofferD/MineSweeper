@@ -29,6 +29,15 @@ namespace MineSweeper
         private CellState[,] _board;
         private bool _gameOver;
 
+        public int _BoardWidth
+        {
+            get { return _boardWidth; }
+        }
+        public int _BoardHeight
+        {
+            get { return _boardHeight; }
+        }
+
         public event EventHandler<EventArgs> GameOver;
 
         private int CountFlags()
@@ -38,7 +47,7 @@ namespace MineSweeper
             {
                 for (int y = 0; y < _boardHeight; y++)
                 {
-                    if (_board[x, y].IsFlagged)
+                    if (_board[x, y].IsFlagged())
                     {
                         count++;
                     }
@@ -52,6 +61,8 @@ namespace MineSweeper
             GameOver?.Invoke(this, EventArgs.Empty);
         }
         public int FlagsRemaining => _numMines - CountFlags();
+
+        public bool GameWon { get; internal set; }
 
         public GameController(int boardWidth, int boardHeight, int numMines)
         {
@@ -71,17 +82,20 @@ namespace MineSweeper
 
             // Add mines to the board
             var random = new Random();
-            int numPlacedMines = 0;
-            while (numPlacedMines < numMines)
+            int minesAdded = 0;
+
+            while (minesAdded < numMines)
             {
-                int x = random.Next(boardWidth);
-                int y = random.Next(boardHeight);
-                if (!_board[x, y].IsMine())
+                int row = random.Next(boardWidth);
+                int col = random.Next(boardHeight);
+
+                if (!board[row, col].IsMine)
                 {
-                    _board[x, y] = CellState.Mine;
-                    numPlacedMines++;
+                    board[row, col].IsMine = true;
+                    minesAdded++;
                 }
             }
+
         }
 
         public CellState GetCellState(int x, int y)
@@ -141,7 +155,6 @@ namespace MineSweeper
             // Use the IsFlagged property or field directly
             cell.IsFlagged = true;
         }
-    }
 
         public bool IsGameOver()
         {
@@ -168,13 +181,24 @@ namespace MineSweeper
             OnGameOver();
             return true;
         }
-
-
- 
-
- 
-
- 
-
-    
+        public void ToggleFlag(int row, int col)
+        {
+            var cell = _board(row, col);
+            if (cell.Isrevealed())
+            {
+                // Cell is already revealed, do nothing
+                return;
+            }
+            if (cell.isFlagged())
+            {
+                //Remove the flag from the cell
+                cell.IsFlagged = false;
+            }
+            else
+            {
+                // Add a flag to the cell
+                cell.IsFlagged = true;
+            }
+        }
+    }
 }
