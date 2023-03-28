@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MineSweeper;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -14,34 +15,39 @@ namespace MineSweeper
     }
     public class Cell
     {
+        public int Row { get; set; }
+        public int Col { get; set; }
         public bool IsRevealed { get; set; }
         public bool IsFlagged { get; set; }
-        public bool HasMine { get; set; }
+        public bool IsMine { get; set; }
         public int NumberOfSurroundingMines { get; set; }
 
-        public int AdjacentMines(Cell[,] grid, int rows, int cols)
+   
+            public Cell(int row, int col)
+            {
+                Row = row;
+                Col = col;
+            }
+        
+        public void AdjacentMines(Cell[,] grid, int rows, int cols)
         {
-            int adjacentMines = 0;
 
             for (int i = Math.Max(0, rows - 1); i <= Math.Min(rows + 1, grid.GetLength(0) - 1); i++)
             {
                 for (int j = Math.Max(0, cols - 1); j <= Math.Min(cols + 1, grid.GetLength(1) - 1); j++)
                 {
-                    if (grid[i, j].HasMine)
+                    if (grid[i, j].IsMine)
                     {
-                        adjacentMines++;
+                        NumberOfSurroundingMines++;
                     }
                 }
             }
 
-            return adjacentMines;
+            
         }
     }
 
-    private void Invalidate()
-    {
-        base.Invalidate();
-    }
+
     public partial class CellControl : UserControl
     {
         private readonly Image _cellCovered = Image.FromFile("CellCovered.png");
@@ -62,18 +68,43 @@ namespace MineSweeper
         private Cell _cell;
         private bool _isLeftMouseDown;
         private bool _isRightMouseDown;
+        readonly int row;
+        readonly int col;
 
-        public Cell Cell
+        public int Row
         {
-            get { return _cell; }
-            set
+            get { return row; }
+        }
+
+        public int Col
+        {
+            get { return col; }
+        }
+
+
+        public event EventHandler LeftClick;
+        public event EventHandler RightClick;
+
+        public class CellInfo
+        {
+            public int Row { get; }
+            public int Col { get; }
+            public bool IsMine { get; set; }
+            public bool IsRevealed { get; set; }
+            public bool IsFlagged { get; set; }
+
+            public CellInfo(int row, int col)
             {
-                if (_cell != value)
-                {
-                    _cell = value;
-                    Invalidate();
-                }
+                Row = row;
+                Col = col;
             }
+        }
+
+
+
+        private new void Invalidate()
+        {
+            base.Invalidate();
         }
 
 
@@ -81,6 +112,16 @@ namespace MineSweeper
         {
             InitializeComponent();
         }
+
+        public CellControl(int row, int col)
+        {
+            this.row = row;
+            this.col = col;
+
+            _cell = new Cell(row, col);
+            InitializeComponent();
+        }
+
         private void InitializeComponent()
         {
             this.SuspendLayout();
@@ -106,7 +147,7 @@ namespace MineSweeper
 
             if (_cell.IsRevealed)
             {
-                if (_cell.HasMine)
+                if (_cell.IsMine)
                 {
                     e.Graphics.DrawImage(_mineExploded, 0, 0, Width, Height);
                     return;
@@ -169,16 +210,16 @@ namespace MineSweeper
             }
         }
 
-        private void OnRightMouseClick()
-        {
-            if (!_cell.IsRevealed)
-            {
-                _cell.IsFlagged = !_cell.IsFlagged;
-                Invalidate();
+private void OnRightMouseClick()
+{
+    if (!_cell.IsRevealed)
+    {
+        _cell.IsFlagged = !_cell.IsFlagged;
+        Invalidate();
 
-                CellFlagged?.Invoke(this, EventArgs.Empty);
-            }
-        }
+        CellFlagged?.Invoke(this, EventArgs.Empty);
+    }
+}
 
 
         public event EventHandler CellRevealed;

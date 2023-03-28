@@ -40,7 +40,7 @@ namespace MineSweeper
         private void OnCellLeftClick(object sender, EventArgs e)
         {
             var cellControl = (CellControl)sender;
-            gameController.RevealCell(cellControl.Row, cellControl.Col);
+            gameController.RevealCell(cellControl.row, cellControl.col);
             UpdateBoard();
         }
 
