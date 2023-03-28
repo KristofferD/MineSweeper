@@ -8,13 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace MineSweeper_2._0
+namespace MineSweeper
 {
-    public partial class UserControl : Form
+    public partial class MyUserControl : UserControl
     {
-        public UserControl()
+        public MyUserControl()
         {
             InitializeComponent();
+            this.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
         }
     }
 }

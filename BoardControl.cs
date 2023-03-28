@@ -1,4 +1,4 @@
-﻿using Minesweeper;
+﻿using MineSweeper;
 using System.Resources;
 using System.Windows.Forms;
 using System;
