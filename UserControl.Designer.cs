@@ -6,7 +6,7 @@ namespace MineSweeper
 {
     public partial class MyUserControl : UserControl
     {
-        public MyUserControl()
+        public MyUserControl(int designTime = 0)
         {
             InitializeComponent();
         }
@@ -17,7 +17,6 @@ namespace MineSweeper
             this.BackColor = System.Drawing.Color.White;
             this.Name = "MyUserControl";
             this.ResumeLayout(false);
-
         }
 
         protected override void OnPaint(PaintEventArgs e)

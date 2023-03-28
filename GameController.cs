@@ -1,4 +1,4 @@
-﻿using Minesweeper;
+﻿using MineSweeper;
 using System;
 
 namespace MineSweeper
@@ -31,8 +31,26 @@ namespace MineSweeper
 
         public event EventHandler<EventArgs> GameOver;
 
+        private int CountFlags()
+        {
+            int count = 0;
+            for (int x = 0; x < _boardWidth; x++)
+            {
+                for (int y = 0; y < _boardHeight; y++)
+                {
+                    if (_board[x, y].IsFlagged)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
 
-
+        private void OnGameOver()
+        {
+            GameOver?.Invoke(this, EventArgs.Empty);
+        }
         public int FlagsRemaining => _numMines - CountFlags();
 
         public GameController(int boardWidth, int boardHeight, int numMines)
@@ -152,28 +170,11 @@ namespace MineSweeper
         }
 
 
-        private int CountFlags()
-        {
-            int count = 0;
-            for (int x = 0; x < _boardWidth; x++)
-            {
-                for (int y = 0; y < _boardHeight; y++)
-                {
-                    if (_board[x, y].IsFlagged)
-                    {
-                        count++;
-                    }
-                }
-            }
-            return count;
-        }
-
-        private void OnGameOver()
-        {
-            GameOver?.Invoke(this, EventArgs.Empty);
-        }
+ 
 
  
 
-    }
+ 
+
+    
 }

@@ -38,7 +38,10 @@ namespace MineSweeper
         }
     }
 
-
+    private void Invalidate()
+    {
+        base.Invalidate();
+    }
     public partial class CellControl : UserControl
     {
         private readonly Image _cellCovered = Image.FromFile("CellCovered.png");
@@ -65,10 +68,14 @@ namespace MineSweeper
             get { return _cell; }
             set
             {
-                _cell = value;
-                Invalidate();
+                if (_cell != value)
+                {
+                    _cell = value;
+                    Invalidate();
+                }
             }
         }
+
 
         public CellControl()
         {
@@ -152,16 +159,27 @@ namespace MineSweeper
 
         private void OnLeftMouseClick()
         {
-            if (!_cell.IsFlagged)
+            if (!_cell.IsFlagged && !_cell.IsRevealed)
             {
                 CellRevealed?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                CellFlagged?.Invoke(this, EventArgs.Empty);
             }
         }
 
         private void OnRightMouseClick()
         {
-            CellFlagged?.Invoke(this, EventArgs.Empty);
+            if (!_cell.IsRevealed)
+            {
+                _cell.IsFlagged = !_cell.IsFlagged;
+                Invalidate();
+
+                CellFlagged?.Invoke(this, EventArgs.Empty);
+            }
         }
+
 
         public event EventHandler CellRevealed;
         public event EventHandler CellFlagged;
